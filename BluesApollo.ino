@@ -34,16 +34,12 @@ void setup() {
   notecard.begin();
 
   // Check alert latch
-  ::pinMode(SWITCH_PIN, INPUT);
-  if (::digitalRead(SWITCH_PIN)) {
-    // Alert already sent
+  ::pinMode(SWITCH_PIN, INPUT_PULLUP);
+  if (!::digitalRead(SWITCH_PIN)) {
+    // Door is closed (pull-up grounded through door switch)
   } else {
     // Send mailbox alert
 
-    // Activate alert latch
-    ::pinMode(SWITCH_PIN, OUTPUT);
-    ::digitalWrite(SWITCH_PIN, HIGH);
-  
     // Configure Notecard to synchronize with Notehub periodically,
     // as well as adjust the frequency based on the battery level.
     {
@@ -54,14 +50,14 @@ void setup() {
       JAddStringToObject(req, "voutbound", "usb:10;high:180;normal:180;low:360;dead:0");
       notecard.sendRequest(req);
     }
-  
+
     // Optimize voltage variable behaviors for LiPo battery
     {
       J * req = notecard.newRequest("card.voltage");
       JAddStringToObject(req, "mode", "lipo");
       notecard.sendRequest(req);
     }
-  
+
     // Configure IMU sensitivity
     {
       J * req = notecard.newRequest("card.motion.mode");
@@ -69,7 +65,7 @@ void setup() {
       JAddNumberToObject(req, "sensitivity", 2); // 3.904G
       notecard.sendRequest(req);
     }
-  
+
     // Send Motion Detection Alert
     {
       J * req = notecard.newRequest("note.add");
