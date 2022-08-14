@@ -11,8 +11,8 @@
 
 #define productUID "com.blues.zfields:showcase"
 
-static const size_t BUTTON_PIN = D5;
-static const size_t SWITCH_PIN = D6;
+static const size_t BUTTON_PIN = D6;
+static const size_t SWITCH_PIN = D5;
 
 Notecard notecard;
 
@@ -103,6 +103,7 @@ void setup() {
     {
       J * req = notecard.newRequest("hub.set");
       JAddStringToObject(req, "product", productUID);
+      JAddStringToObject(req, "sn", "Apollo");
       JAddStringToObject(req, "mode", "periodic");
       JAddStringToObject(req, "vinbound", "usb:10;high:360;normal:720;low:1440;dead:0");
       JAddStringToObject(req, "voutbound", "usb:10;high:180;normal:180;low:360;dead:0");
