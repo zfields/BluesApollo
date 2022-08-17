@@ -1,6 +1,7 @@
 #define NDEBUG
 
 #include <Notecard.h>
+#include <Notecarrier.h>
 #ifdef ARDUINO_ARCH_ESP32
   #include <WiFi.h>
 #endif
@@ -54,6 +55,35 @@ int awaitDoorClose(size_t timeout_ms_ = 35000) {
   return result;
 }
 
+void configureNotecard (void) {
+    // Configure Notecard to synchronize with Notehub periodically,
+    // as well as adjust the frequency based on the battery level.
+    {
+      J * req = notecard.newRequest("hub.set");
+      JAddStringToObject(req, "product", productUID);
+      JAddStringToObject(req, "sn", "Apollo");
+      JAddStringToObject(req, "mode", "periodic");
+      JAddStringToObject(req, "vinbound", "usb:10;high:360;normal:720;low:1440;dead:0");
+      JAddStringToObject(req, "voutbound", "usb:10;high:180;normal:180;low:360;dead:0");
+      notecard.sendRequest(req);
+    }
+
+    // Optimize voltage variable behaviors for LiPo battery
+    {
+      J * req = notecard.newRequest("card.voltage");
+      JAddStringToObject(req, "mode", "lipo");
+      notecard.sendRequest(req);
+    }
+
+    // Configure IMU sensitivity
+    {
+      J * req = notecard.newRequest("card.motion.mode");
+      JAddBoolToObject(req, "start", true);
+      JAddNumberToObject(req, "sensitivity", 3); // 1.952G
+      notecard.sendRequest(req);
+    }
+}
+
 void setup() {
   // Provide visual signal when the Host MCU is powered
   ::pinMode(LED_BUILTIN, OUTPUT);
@@ -97,33 +127,7 @@ void setup() {
 #ifndef NDEBUG
     notecard.logDebug("Mail collection in progress...\r\n");
 #endif
-
-    // Configure Notecard to synchronize with Notehub periodically,
-    // as well as adjust the frequency based on the battery level.
-    {
-      J * req = notecard.newRequest("hub.set");
-      JAddStringToObject(req, "product", productUID);
-      JAddStringToObject(req, "sn", "Apollo");
-      JAddStringToObject(req, "mode", "periodic");
-      JAddStringToObject(req, "vinbound", "usb:10;high:360;normal:720;low:1440;dead:0");
-      JAddStringToObject(req, "voutbound", "usb:10;high:180;normal:180;low:360;dead:0");
-      notecard.sendRequest(req);
-    }
-
-    // Optimize voltage variable behaviors for LiPo battery
-    {
-      J * req = notecard.newRequest("card.voltage");
-      JAddStringToObject(req, "mode", "lipo");
-      notecard.sendRequest(req);
-    }
-
-    // Configure IMU sensitivity
-    {
-      J * req = notecard.newRequest("card.motion.mode");
-      JAddBoolToObject(req, "start", true);
-      JAddNumberToObject(req, "sensitivity", 3); // 1.952G
-      notecard.sendRequest(req);
-    }
+    configureNotecard();
 
     awaitDoorClose();
   } else if (door_ajar) {
